@@ -46,7 +46,7 @@ class Bot(discord.Client):
                 msg = report.create_message()
                 if msg is not None:
                     logging.info(f"Product '{report.product.name}' has changed. Reporting...")
-                    send_tasks.append(bot.send(self.config["discord"]["channel_id"], embed=msg))
+                    send_tasks.append(self.send(self.config["discord"]["channel_id"], embed=msg))
 
             if send_tasks:
                 await asyncio.gather(*send_tasks)

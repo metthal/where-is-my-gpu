@@ -26,5 +26,6 @@ class Scraper:
                 report = Report(product)
                 report.old_product = await Product.load(redis, product.id)
                 await product.save(redis)
+                reports.append(report)
 
         return reports
