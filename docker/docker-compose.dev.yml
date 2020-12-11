@@ -1,5 +1,9 @@
 version: '3.6'
 services:
   bot:
+    environment:
+      - DEV=1
     volumes:
       - ../config.dev.conf:/app/config.conf:ro
+      - ../wimg:/app/wimg:ro
+      - ../run.py:/app/run.py:ro

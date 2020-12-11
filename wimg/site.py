@@ -9,6 +9,10 @@ class Site:
         self.resource = resource[1:] if resource.startswith("/") else resource
         self.tree = None
 
+    @property
+    def url(self):
+        return f"{self.base_url}{self.resource}"
+
     def url_for_page(self, page: int):
         raise NotImplementedError
 

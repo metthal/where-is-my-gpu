@@ -1,10 +1,15 @@
-FROM python:3.9
+FROM python:3.9 AS builder
 
 ADD requirements.txt /app/
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip wheel --no-cache-dir -r /app/requirements.txt -w /wheels
+
+FROM python:3.9-slim
+
+COPY --from=builder /wheels /wheels
+RUN pip install wheels/*
 
 ADD . /app
-
 WORKDIR /app
 
-CMD ["/app/run.py"]
+ENV TZ=Europe/Prague
+ENTRYPOINT ["bash", "/app/docker/entrypoint.sh"]

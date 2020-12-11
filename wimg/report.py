@@ -19,7 +19,7 @@ class Report:
         result.set_thumbnail(url=self.product.image_url)
         if self.old_product and self.product.price != self.old_product.price:
             result.insert_field_at(0, name=f"New price: {self.product.price} CZK", value=f"Previous price: {self.old_product.price} CZK" if self.old_product is not None else "", inline=False)
-            result.color = POSITIVE_COLOR if self.old_product.price is None or self.product.price < self.old_product.price else NEGATIVE_COLOR
+            result.color = POSITIVE_COLOR if self.old_product.price is None or self.product.price is None or self.product.price < self.old_product.price else NEGATIVE_COLOR
         if self.old_product and self.product.stock != self.old_product.stock:
             out_of_stock = self.product.stock is None
             result.insert_field_at(0, name="Out of stock" if out_of_stock else "In stock", value="Out of stock" if out_of_stock else f"Pieces: {self.product.stock}", inline=False)
