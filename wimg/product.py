@@ -4,6 +4,9 @@ from datetime import datetime
 from typing import List, Tuple
 
 
+CZK_EUR_EXCHANGE_RATE = 25.5
+
+
 class Product:
     def __init__(self, id: int, name: str, link: str, price: int, stock: str, image_url: str, additional_urls: List[Tuple[str, str]] = None):
         self.id = id
@@ -16,7 +19,11 @@ class Product:
         self.last_seen = datetime.now()
 
     def __str__(self):
-        return "{} [{}] [{}] [{}]".format(self.id, self.name, "Out of Stock" if self.stock is None else f"In Stock ({self.stock})", f"{self.price} CZK" if self.price is not None else "No Price")
+        return "{} [{}] [{}] [{}]".format(self.id, self.name, "Out of Stock" if self.stock is None else f"In Stock ({self.stock})", self.price_with_currency)
+
+    @property
+    def price_with_currency(self):
+        return "No Price" if self.price is None else "{} CZK ({} EUR)".format(self.price, int(self.price / CZK_EUR_EXCHANGE_RATE))
 
     async def save(self, redis):
         await redis.set(self.id, pickle.dumps(self))
@@ -37,7 +44,7 @@ class Product:
             self.id,
             self.name,
             self.link,
-            self.price,
+            self.price_with_currency,
             self.stock,
             self.last_seen
         )

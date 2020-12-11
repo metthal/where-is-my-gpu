@@ -18,7 +18,7 @@ class Report:
         result = discord.Embed(title=self.product.name, url=self.product.link, description=" | ".join(f"[{name}]({link})" for name, link in self.product.additional_urls))
         result.set_thumbnail(url=self.product.image_url)
         if self.old_product and self.product.price != self.old_product.price:
-            result.insert_field_at(0, name=f"New price: {self.product.price} CZK", value=f"Previous price: {self.old_product.price} CZK" if self.old_product is not None else "", inline=False)
+            result.insert_field_at(0, name=f"New price: {self.product.price_with_currency}", value=f"Previous price: {self.old_product.price_with_currency}" if self.old_product is not None else "No previous price", inline=False)
             result.color = POSITIVE_COLOR if self.old_product.price is None or self.product.price is None or self.product.price < self.old_product.price else NEGATIVE_COLOR
         if self.old_product and self.product.stock != self.old_product.stock:
             out_of_stock = self.product.stock is None
