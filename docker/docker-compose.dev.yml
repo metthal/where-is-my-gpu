@@ -1,0 +1,5 @@
+version: '3.6'
+services:
+  bot:
+    volumes:
+      - ../config.dev.conf:/app/config.conf:ro

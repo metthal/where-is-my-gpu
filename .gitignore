@@ -1,0 +1,7 @@
+docker/redis/
+env/
+__pycache__/
+*.pyc
+config.conf
+config.dev.conf
+config.prod.conf
