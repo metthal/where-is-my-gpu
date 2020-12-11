@@ -12,7 +12,7 @@ from pyhocon import ConfigFactory
 from wimg.product import Product
 from wimg.report import Report
 from wimg.scraper import Scraper
-from wimg.sites import Alza, Czc
+from wimg.sites import Alza
 
 
 logging.basicConfig(
