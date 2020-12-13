@@ -6,8 +6,6 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - ./redis:/data
-    ports:
-      - "6379:6379"
   bot:
     build:
       dockerfile: docker/Dockerfile
