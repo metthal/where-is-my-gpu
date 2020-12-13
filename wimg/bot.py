@@ -67,6 +67,7 @@ class Bot(discord.Client):
         if cmd == "help":
             logging.info(f"Command: HELP ({message.author.name})")
             await self.send(
+                message.channel.id,
                 textwrap.dedent("""
                 Yo. Just tag me and type a command which you'd like to execute. I have these commands available:
 
