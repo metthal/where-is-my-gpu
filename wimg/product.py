@@ -19,7 +19,7 @@ class Product:
         self.last_seen = datetime.now()
 
     def __str__(self):
-        return "{} [{}] [{}] [{}]".format(self.id, self.name, "Out of Stock" if self.stock is None else f"In Stock ({self.stock})", self.price_with_currency)
+        return "{} [{}] [{}] [{}] [{}]".format(self.id, self.name, "Out of Stock" if self.stock is None else f"In Stock ({self.stock})", self.price_with_currency, self.last_seen)
 
     @property
     def price_with_currency(self):

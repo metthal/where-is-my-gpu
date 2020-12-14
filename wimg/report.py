@@ -1,4 +1,5 @@
 import discord
+import logging
 
 from typing import Optional
 
@@ -15,6 +16,9 @@ class Report:
         self.old_product = None
 
     def create_message(self):
+        logging.debug(f"Creating message for product \'{self.product.name}\'...")
+        logging.debug(f"  new -> {self.product}")
+        logging.debug(f"  old -> {self.old_product}")
         result = discord.Embed(title=self.product.name, url=self.product.link, description=" | ".join(f"[{name}]({link})" for name, link in self.product.additional_urls))
         result.set_thumbnail(url=self.product.image_url)
         if self.old_product and self.product.price != self.old_product.price:

@@ -5,19 +5,33 @@ import logging
 import sys
 
 from pyhocon import ConfigFactory
+from typing import Optional
 
 from wimg.bot import Bot
 
 
+def log_level_from_string(log_level_str: Optional[str]):
+    if log_level_str == "debug":
+        return logging.DEBUG
+    elif log_level_str == "info":
+        return logging.INFO
+    elif log_level_str == "warning":
+        return logging.WARNING
+    elif log_level_str == "error":
+        return logging.ERROR
+    else:
+        return logging.INFO
+
+
+config = ConfigFactory.parse_file("config.conf")
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level_from_string(config.get("log_level", None)),
     format="[%(asctime)s] [%(levelname)-8s] -- %(message)s",
     stream=sys.stdout
 )
 
 
 async def main():
-    config = ConfigFactory.parse_file("config.conf")
     bot = Bot(config, loop=asyncio.get_event_loop())
 
     try:
