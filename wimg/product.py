@@ -88,4 +88,4 @@ class NoProduct:
 
     @property
     def readable_stock(self):
-        return "Out of Stock"
+        return "Did Not Exist"
