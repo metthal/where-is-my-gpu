@@ -26,7 +26,7 @@ class Report:
                 self.positive = self.product.price < self.old_product.price
             self.changes.append("price")
 
-        if self.product.stock != self.old_product.stock:
+        if (self.product.out_of_stock and self.old_product.stock) or (self.product.stock and self.old_product.out_of_stock):
             self.positive = not self.product.out_of_stock
             self.changes.append("stock")
 
