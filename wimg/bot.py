@@ -109,7 +109,7 @@ class Bot(discord.Client):
             await self.send(message.channel.id, embed=r2.create_message())
         elif cmd == "targets":
             logging.info(f"Command: TARGETS ({message.author.name})")
-            await self.send(message.channel.id, "\n".join([site.url for site in self.scraper.sites]))
+            await self.send(message.channel.id, "```" + "\n".join([site.url for site in self.scraper.sites]) + "```")
         elif cmd == "list":
             logging.info(f"Command: LIST ({message.author.name})")
             all_keys = []
