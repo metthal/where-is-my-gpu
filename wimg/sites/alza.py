@@ -32,5 +32,5 @@ class Alza(Site):
             matches = IN_STOCK_RE.fullmatch(stock_text)
             stock = matches.group(1) if matches else None
             image_url = product.xpath("div[contains(@class, 'top')]/div[contains(@class, 'bi')]/a/em/img")[0].attrib.get("data-src", None)
-            result.append(Product(id, name, link, price, stock, image_url, [("🇸🇰 Alza", f"{self.sk_base_url}{self.resource}")]))
+            result.append(Product(id, name, link, price, stock, image_url, [("🇸🇰 Alza", f"{self.sk_base_url}{name_link.attrib['href'][1:]}")]))
         return result

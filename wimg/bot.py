@@ -15,7 +15,7 @@ from wimg.scraper import Scraper
 from wimg.sites import Alza
 
 
-MENTION_RE = re.compile(r"<@![0-9]+>")
+MENTION_RE = re.compile(r"<@(!)?[0-9]+>")
 
 
 class Bot(discord.Client):
