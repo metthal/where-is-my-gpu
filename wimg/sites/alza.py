@@ -9,8 +9,8 @@ IN_STOCK_RE = re.compile(r"skladem\s+((>\s+)?[0-9]+).*")
 
 
 class Alza(Site):
-    def __init__(self, resource: str):
-        super(Alza, self).__init__("https://alza.cz/", resource)
+    def __init__(self, resource: str, channel_id: int):
+        super(Alza, self).__init__("https://alza.cz/", resource, channel_id)
         self.sk_base_url = "https://alza.sk/"
 
     def url_for_page(self, page: int) -> str:

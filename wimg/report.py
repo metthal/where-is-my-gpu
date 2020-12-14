@@ -11,7 +11,8 @@ NEGATIVE_COLOR = 0xd10024
 
 
 class Report:
-    def __init__(self, product: Product, old_product: Union[Product, NoProduct] = None):
+    def __init__(self, channel_id: int, product: Product, old_product: Union[Product, NoProduct] = None):
+        self.channel_id = channel_id
         self.product = product
         self.old_product = old_product or NoProduct()
         self.changes = []

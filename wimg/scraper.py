@@ -6,6 +6,10 @@ from wimg.report import Report
 from wimg.site import Site
 
 
+async def get_with_channel_id(site: Site):
+    return (site.channel_id, await site.get())
+
+
 class Scraper:
     def __init__(self):
         self.sites = []
@@ -17,13 +21,13 @@ class Scraper:
         logging.info("Starting scraping...")
 
         results = await asyncio.gather(*[
-            site.get() for site in self.sites
+            get_with_channel_id(site) for site in self.sites
         ])
 
         reports = []
-        for result in results:
+        for channel_id, result in results:
             for product in result:
-                report = Report(product, await Product.load(redis, product.id))
+                report = Report(channel_id, product, await Product.load(redis, product.id))
                 logging.debug(f"Saving '{product.name}' to the database...")
                 await product.save(redis)
                 reports.append(report)

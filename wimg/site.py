@@ -4,9 +4,10 @@ import io
 
 
 class Site:
-    def __init__(self, base_url: str, resource: str):
+    def __init__(self, base_url: str, resource: str, channel_id: int):
         self.base_url = base_url if base_url.endswith("/") else f"{base_url}/"
         self.resource = resource[1:] if resource.startswith("/") else resource
+        self.channel_id = channel_id
         self.tree = None
 
     @property
