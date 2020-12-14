@@ -25,6 +25,14 @@ class Product:
     def price_with_currency(self):
         return "No Price" if self.price is None else "{} CZK ({} EUR)".format(self.price, int(self.price / CZK_EUR_EXCHANGE_RATE))
 
+    @property
+    def out_of_stock(self):
+        return self.stock is None
+
+    @property
+    def readable_stock(self):
+        return f"In Stock ({self.stock})" if self.stock is not None else "Out of Stock"
+
     async def save(self, redis):
         await redis.set(self.id, pickle.dumps(self))
 
@@ -59,3 +67,25 @@ class Product:
             "Stock",
             "Last Seen"
         ]
+
+
+class NoProduct:
+    def __init__(self):
+        self.name = "<No Product>"
+        self.price = None
+        self.stock = None
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def price_with_currency(self):
+        return "No Price"
+
+    @property
+    def out_of_stock(self):
+        return True
+
+    @property
+    def readable_stock(self):
+        return "Out of Stock"

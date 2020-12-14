@@ -1,9 +1,9 @@
 import discord
 import logging
 
-from typing import Optional
+from typing import Optional, Union
 
-from wimg.product import Product
+from wimg.product import Product, NoProduct
 
 
 POSITIVE_COLOR = 0x00d759
@@ -11,21 +11,38 @@ NEGATIVE_COLOR = 0xd10024
 
 
 class Report:
-    def __init__(self, product: Product):
+    def __init__(self, product: Product, old_product: Union[Product, NoProduct] = None):
         self.product = product
-        self.old_product = None
+        self.old_product = old_product or NoProduct()
+        self.changes = []
+        self.positive = True
+
+        if self.product.price != self.old_product.price:
+            if self.old_product.price is None:
+                self.positive = True
+            elif self.product.price is None:
+                self.positive = False
+            else:
+                self.positive = self.product.price < self.old_product.price
+            self.changes.append("price")
+
+        if self.product.stock != self.old_product.stock:
+            self.positive = not self.product.out_of_stock
+            self.changes.append("stock")
+
+    @property
+    def any_changes(self):
+        return len(self.changes) > 0
 
     def create_message(self):
         logging.debug(f"Creating message for product \'{self.product.name}\'...")
         logging.debug(f"  new -> {self.product}")
         logging.debug(f"  old -> {self.old_product}")
+
         result = discord.Embed(title=self.product.name, url=self.product.link, description=" | ".join(f"[{name}]({link})" for name, link in self.product.additional_urls))
+        result.color = POSITIVE_COLOR if self.positive else NEGATIVE_COLOR
         result.set_thumbnail(url=self.product.image_url)
-        if self.old_product and self.product.price != self.old_product.price:
-            result.insert_field_at(0, name=f"New price: {self.product.price_with_currency}", value=f"Previous price: {self.old_product.price_with_currency}" if self.old_product is not None else "No previous price", inline=False)
-            result.color = POSITIVE_COLOR if self.old_product.price is None or self.product.price is None or self.product.price < self.old_product.price else NEGATIVE_COLOR
-        if self.old_product and self.product.stock != self.old_product.stock:
-            out_of_stock = self.product.stock is None
-            result.insert_field_at(0, name="Out of stock" if out_of_stock else "In stock", value="Out of stock" if out_of_stock else f"Pieces: {self.product.stock}", inline=False)
-            result.color = POSITIVE_COLOR if not out_of_stock else NEGATIVE_COLOR
-        return result if len(result.fields) > 0 else None
+        result.add_field(name=self.product.readable_stock, value=f"Previous: {self.old_product.readable_stock}", inline=False)
+        result.add_field(name=self.product.price_with_currency, value=f"Previous: {self.old_product.price_with_currency}", inline=False)
+        result.set_footer(text="Changed: {}".format(", ".join(self.changes)))
+        return result

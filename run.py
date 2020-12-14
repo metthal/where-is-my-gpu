@@ -23,12 +23,20 @@ def log_level_from_string(log_level_str: Optional[str]):
         return logging.INFO
 
 
+def setup_logging(config: dict):
+    logging.basicConfig(
+        level=log_level_from_string(config.get("log_level", None)),
+        format="[%(asctime)s] [%(levelname)-8s] -- %(message)s",
+        stream=sys.stdout
+    )
+
+    if config.get("log_level", None) == "debug":
+        for name in ["discord"]:
+            logging.getLogger(name).setLevel(logging.INFO)
+
+
 config = ConfigFactory.parse_file("config.conf")
-logging.basicConfig(
-    level=log_level_from_string(config.get("log_level", None)),
-    format="[%(asctime)s] [%(levelname)-8s] -- %(message)s",
-    stream=sys.stdout
-)
+setup_logging(config)
 
 
 async def main():

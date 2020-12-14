@@ -23,8 +23,7 @@ class Scraper:
         reports = []
         for result in results:
             for product in result:
-                report = Report(product)
-                report.old_product = await Product.load(redis, product.id)
+                report = Report(product, await Product.load(redis, product.id))
                 logging.debug(f"Saving \'{product.name}\' to the database...")
                 await product.save(redis)
                 reports.append(report)

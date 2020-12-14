@@ -42,11 +42,9 @@ class Bot(discord.Client):
             reports = await self.scraper.scrape(self.redis)
 
             send_tasks = []
-            for report in reports:
-                msg = report.create_message()
-                if msg is not None:
-                    logging.info(f"Product '{report.product.name}' has changed. Reporting...")
-                    send_tasks.append(self.send(self.config["discord"]["channel_id"], embed=msg))
+            for report in filter(lambda r: r.any_changes, reports):
+                logging.info(f"Product '{report.product.name}' has changed. Reporting...")
+                send_tasks.append(self.send(self.config["discord"]["channel_id"], embed=report.create_message()))
 
             if send_tasks:
                 await asyncio.gather(*send_tasks)
