@@ -29,6 +29,8 @@ class Alza(Site):
             link = f"{self.base_url}{name_link.attrib['href'][1:]}"
             price = parse_price(product.xpath("div[contains(@class, 'bottom')]//div[contains(@class, 'priceInner')]/span")[0].text)
             stock_text = product.xpath("div[contains(@class, 'bottom')]/div[contains(@class, 'avl')]/span")[0].text.lower()
+            if "rozbaleno" in stock_text:
+                continue
             matches = IN_STOCK_RE.fullmatch(stock_text)
             stock = matches.group(1) if matches else None
             image_url = product.xpath("div[contains(@class, 'top')]/div[contains(@class, 'bi')]/a/em/img")[0].attrib.get("data-src", None)
