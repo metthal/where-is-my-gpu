@@ -11,3 +11,5 @@ services:
       dockerfile: docker/Dockerfile
       context: ..
     restart: unless-stopped
+    depends_on:
+      - redis
