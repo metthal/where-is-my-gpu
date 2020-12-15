@@ -3,6 +3,8 @@ import pickle
 from datetime import datetime
 from typing import List, Tuple
 
+from wimg.utils import remove_prefix
+
 
 CZK_EUR_EXCHANGE_RATE = 25.5
 
@@ -34,18 +36,37 @@ class Product:
         return f"In Stock ({self.stock})" if self.stock is not None else "Out of Stock"
 
     async def save(self, redis):
-        await redis.set(self.id, pickle.dumps(self))
+        await redis.set(f"product:{self.id}", pickle.dumps(self))
+        await redis.set(f"product_name:{self.name.lower()}", self.id)
 
     @classmethod
     async def load(cls, redis, id):
-        result = await redis.get(id)
+        result = await redis.get(f"product:{id}")
         if result is None:
             return None
         return pickle.loads(result)
 
     @classmethod
     async def load_multiple(cls, redis, ids):
-        return [pickle.loads(result) for result in await redis.mget(*ids)]
+        if len(ids) == 0:
+            return []
+        return [pickle.loads(result) for result in await redis.mget(*[f"product:{id}" for id in ids]) if result is not None]
+
+    @classmethod
+    async def load_all(cls, redis):
+        all_keys = []
+        cursor = b"0"
+        while cursor:
+            cursor, keys = await redis.scan(cursor, match="product:*")
+            all_keys.extend([remove_prefix("product:", key.decode("utf-8")) for key in keys])
+        return await cls.load_multiple(redis, all_keys)
+
+    @classmethod
+    async def find(cls, redis, name):
+        result_id = await redis.get(f"product_name:{name.lower()}")
+        if result_id is None:
+            return None
+        return await cls.load(redis, int(result_id))
 
     def to_tuple(self):
         return (

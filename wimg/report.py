@@ -11,7 +11,7 @@ NEGATIVE_COLOR = 0xd10024
 
 
 class Report:
-    def __init__(self, channel_id: int, product: Product, old_product: Union[Product, NoProduct] = None):
+    def __init__(self, channel_id: int, product: Product, old_product: Union[Product, NoProduct] = None, force_change: bool = False):
         self.channel_id = channel_id
         self.product = product
         self.old_product = old_product or NoProduct()
@@ -30,6 +30,9 @@ class Report:
         if (self.product.out_of_stock and self.old_product.stock) or (self.product.stock and self.old_product.out_of_stock):
             self.positive = not self.product.out_of_stock
             self.changes.append("stock")
+
+        if force_change:
+            self.changes.append("forced")
 
     @property
     def any_changes(self):

@@ -14,6 +14,7 @@ from wimg.product import Product
 from wimg.report import Report
 from wimg.scraper import Scraper
 from wimg.sites import Alza
+from wimg.user import User
 
 
 MENTION_RE = re.compile(r"<@(!)?[0-9]+>")
@@ -40,17 +41,32 @@ class Bot(discord.Client):
         asyncio.create_task(super(Bot, self).start(self.config["discord"]["token"]))
 
         while True:
+            users = await User.load_all(self.redis)
             reports = await self.scraper.scrape(self.redis)
 
             send_tasks = []
             for report in filter(lambda r: r.any_changes, reports):
-                logging.info(f"Product '{report.product.name}' has changed. Reporting...")
-                send_tasks.append(self.send(report.channel_id, embed=report.create_message()))
+                send_tasks.append(self.send_report(report, users))
 
             if send_tasks:
                 await asyncio.gather(*send_tasks)
 
             await asyncio.sleep(self.config["scraper"]["interval"])
+
+    async def send_report(self, report: Report, users: List[User]):
+        logging.info(f"Product '{report.product.name}' has changed. Reporting...")
+
+        mentions = []
+        for user in users:
+            if user.is_subscribed_for(report.product):
+                mentions.append(user.id)
+                continue
+
+        content = None
+        if mentions:
+            content = " ".join([f"<@{user_id}>" for user_id in mentions])
+
+        return await self.send(report.channel_id, content=content, embed=report.create_message())
 
     async def stop(self):
         await self.logout()
@@ -63,7 +79,8 @@ class Bot(discord.Client):
             return
 
         try:
-            cmd = MENTION_RE.sub("", message.content).strip().lower()
+            cmd_parts = MENTION_RE.sub("", message.content).strip().split(" ", 1)
+            cmd = cmd_parts[0].lower()
             if cmd == "help":
                 logging.info(f"Command: HELP ({message.author.name})")
                 await self.send(
@@ -73,40 +90,17 @@ class Bot(discord.Client):
 
                     `help` - You are reading this.
                     `ping` - Test whether I am responsive.
-                    `test` - Test sending of embedded links.
                     `targets` - List of URLs I am watching.
                     `list` - List of products I have in the database.
+                    `trigger <PRODUCT_NAME>` - Test notification for product by its name.
+                    `subscriptions` - List of products you are subscribed for. When there's something new about this product, you are explicitly tagged.
+                    `subscribe <PRODUCT_NAME>` - Subscribe for a product by its name.
+                    `unsubscribe <PRODUCT_NAME>` - Unsubscribe from a product by its name. If you put `all` in place of product name then all your subscriptions are removed.
                     """)
                 )
             elif cmd == "ping":
                 logging.info(f"Command: PING ({message.author.name})")
                 await message.add_reaction("✅")
-            elif cmd == "test":
-                logging.info(f"Command: TEST ({message.author.name})")
-                p1 = Product(
-                    6160836,
-                    "EVGA GeForce RTX 3090 FTW3 ULTRA",
-                    "https://www.alza.cz/gaming/evga-geforce-rtx-3090-ftw3-ultra-d6160836.htm",
-                    None,
-                    None,
-                    "https://cdn.alza.cz/Foto/f11/EV/EVr3090h4.jpg",
-                    [("🇸🇰 Alza", "https://www.alza.sk/gaming/evga-geforce-rtx-3090-ftw3-ultra-d6160836.htm")]
-                )
-                p2 = Product(
-                    6160836,
-                    "EVGA GeForce RTX 3090 FTW3 ULTRA",
-                    "https://www.alza.cz/gaming/evga-geforce-rtx-3090-ftw3-ultra-d6160836.htm",
-                    45000,
-                    "> 5",
-                    "https://cdn.alza.cz/Foto/f11/EV/EVr3090h4.jpg",
-                    [("🇸🇰 Alza", "https://www.alza.sk/gaming/evga-geforce-rtx-3090-ftw3-ultra-d6160836.htm")]
-                )
-                r1 = Report(p2)
-                r1.old_product = p1
-                r2 = Report(p1)
-                r2.old_product = p2
-                await self.send(message.channel.id, embed=r1.create_message())
-                await self.send(message.channel.id, embed=r2.create_message())
             elif cmd == "targets":
                 logging.info(f"Command: TARGETS ({message.author.name})")
                 longest_url = max([len(site.url) for site in self.scraper.sites])
@@ -123,12 +117,7 @@ class Bot(discord.Client):
                 )
             elif cmd == "list":
                 logging.info(f"Command: LIST ({message.author.name})")
-                all_keys = []
-                cursor = b"0"
-                while cursor:
-                    cursor, keys = await self.redis.scan(cursor, match="*")
-                    all_keys.extend(keys)
-                products_table = sorted([product.to_tuple() for product in sorted(await Product.load_multiple(self.redis, all_keys), key=lambda p: p.name)])
+                products_table = sorted([product.to_tuple() for product in sorted(await Product.load_all(self.redis), key=lambda p: p.name)])
                 await self.send(
                     message.channel.id,
                     file=discord.File(
@@ -136,6 +125,65 @@ class Bot(discord.Client):
                         filename="products-{:%Y-%m-%d-%H-%M-%S}.txt".format(datetime.now())
                     )
                 )
+            elif cmd == "trigger":
+                product_name = cmd_parts[1]
+                logging.info(f"Command: TRIGGER ({message.author.name}) ({product_name})")
+                product = await Product.find(self.redis, product_name)
+                if product is None:
+                    await message.add_reaction("❌")
+                else:
+                    users = await User.load_all(self.redis)
+                    report = Report(message.channel.id, product, product, force_change=True)
+                    await self.send_report(report, users)
+                    await message.add_reaction("✅")
+            elif cmd == "subscriptions":
+                logging.info(f"Command: SUBSCRIPTIONS ({message.author.name})")
+                user = await User.load(self.redis, message.author.id)
+                if user is None:
+                    await message.add_reaction("\u0030\ufe0f\u20e3") # emoji :zero:
+                    return
+
+                products = await Product.load_multiple(self.redis, user.subscribed)
+                if len(products) == 0:
+                    await message.add_reaction("\u0030\ufe0f\u20e3") # emoji :zero:
+                else:
+                    await self.send(message.channel.id, f"<@{user.id}>, here are you subscriptions:\n```" + "\n".join([p.name for p in products]) + "```")
+            elif cmd == "subscribe":
+                product_name = cmd_parts[1]
+                logging.info(f"Command: SUBSCRIBE ({message.author.name}) ({product_name})")
+                product = await Product.find(self.redis, product_name)
+                if product is None:
+                    await message.add_reaction("❌")
+                    return
+
+                user = await User.load(self.redis, message.author.id)
+                if user is None:
+                    user = User(message.author.id)
+
+                user.subscribed.add(product.id)
+                await user.save(self.redis)
+                await message.add_reaction("✅")
+            elif cmd == "unsubscribe":
+                product_name = cmd_parts[1]
+                logging.info(f"Command: UNSUBSCRIBE ({message.author.name}) ({product_name})")
+                user = await User.load(self.redis, message.author.id)
+                if user is None:
+                    return
+
+                if product_name == "all":
+                    product_ids = list(user.subscribed)
+                else:
+                    product = await Product.find(self.redis, product_name)
+                    if product is None:
+                        await message.add_reaction("❌")
+                        return
+                    product_ids = [product.id]
+
+                for product_id in product_ids:
+                    if product_id in user.subscribed:
+                        user.subscribed.remove(product_id)
+                await user.save(self.redis)
+                await message.add_reaction("✅")
             else:
                 logging.error(f"Command: Got unknown command '{cmd}' from '{message.author.name}'")
                 await message.add_reaction("❓")
