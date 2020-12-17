@@ -107,13 +107,17 @@ class NoProduct:
         return self.name
 
     @property
-    def price_with_currency(self):
-        return "No Price"
-
-    @property
     def out_of_stock(self):
         return True
 
     @property
     def readable_stock(self):
         return "Did Not Exist"
+
+    @property
+    def readable_links(self):
+        return ""
+
+    @property
+    def readable_price(self):
+        return str(self.price)
