@@ -103,15 +103,15 @@ class Bot(discord.Client):
                 await message.add_reaction("✅")
             elif cmd == "targets":
                 logging.info(f"Command: TARGETS ({message.author.name})")
-                longest_url = max([len(site.url) for site in self.scraper.sites])
+                longest_url = max([len(url) for site in self.scraper.sites for url in site.urls])
                 await self.send(message.channel.id,
                     "```" +
                     "\n".join([
                         "{}{} -> #{}".format(
-                            site.url,
-                            " " * (longest_url - len(site.url)),
+                            url,
+                            " " * (longest_url - len(url)),
                             self.get_channel(site.channel_id).name
-                        ) for site in self.scraper.sites
+                        ) for site in self.scraper.sites for url in site.urls
                     ]) +
                     "```"
                 )

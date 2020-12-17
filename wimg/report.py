@@ -19,9 +19,9 @@ class Report:
         self.positive = True
 
         if self.product.price != self.old_product.price:
-            if self.old_product.price is None:
+            if not self.old_product.price:
                 self.positive = True
-            elif self.product.price is None:
+            elif not self.product.price:
                 self.positive = False
             else:
                 self.positive = self.product.price < self.old_product.price
@@ -43,10 +43,10 @@ class Report:
         logging.debug(f"  new -> {self.product}")
         logging.debug(f"  old -> {self.old_product}")
 
-        result = discord.Embed(title=self.product.name, url=self.product.link, description=" | ".join(f"[{name}]({link})" for name, link in self.product.additional_urls))
+        result = discord.Embed(title=self.product.name, url=self.product.links[0].url, description=self.product.readable_links)
         result.color = POSITIVE_COLOR if self.positive else NEGATIVE_COLOR
         result.set_thumbnail(url=self.product.image_url)
         result.add_field(name=self.product.readable_stock, value=f"Previous: {self.old_product.readable_stock}", inline=False)
-        result.add_field(name=self.product.price_with_currency, value=f"Previous: {self.old_product.price_with_currency}", inline=False)
+        result.add_field(name=self.product.readable_price, value=f"Previous: {self.old_product.readable_price}", inline=False)
         result.set_footer(text="Changed: {}".format(", ".join(self.changes)))
         return result
