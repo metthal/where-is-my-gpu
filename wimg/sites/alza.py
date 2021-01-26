@@ -20,7 +20,7 @@ class AlzaForCountry(Site):
         self.country = country
 
     def url_for_page(self, page: int) -> str:
-        return "{}{}{}-p{}.htm".format(self.base_url, self.resource, self.resource[:-4], page)
+        return "{}{}{}{}.htm".format(self.base_url, self.resource, self.resource[:-4], f"-p{page}" if page > 1 else "")
 
     def has_next_page(self) -> bool:
         return len(self.tree.xpath("//div[@id='pagerbottom']/a[@id='pgby2']")) != 0
